@@ -5,5 +5,4 @@ from django.views.generic import RedirectView, TemplateView
 from poker import views
 
 urlpatterns = [
-    url(r'^game_status/', views.game_status),
 ]
