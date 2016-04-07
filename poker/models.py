@@ -194,8 +194,15 @@ class Game(models.Model):
         """
         if not self._is_next_stage_ready():
             return self
+
         # corresponding action would be taken and
         # game would be updated
+        if self.stage == GameStages.RiverDone:
+            # River card has been served and the betting round is done.
+            # time for scoring!
+            # TODO: need behavior design
+            return
+
         if self.stage == GameStages.Initial:
             # serve pocket cards
             num_of_cards = self.total_num_of_players * 2
@@ -204,42 +211,28 @@ class Game(models.Model):
             p_cards = "|".join(pocket_cards) # 'sA|s7|dK|a7|h3|h5' for 3 players
             self.pocket_cards = "$".join(p_cards[i:i+5] for i in range(0, len(p_cards), 6)) # 'sA|s7$dK|a7$h3|h5'
             self.stage = GameStages.PocketDone
-            # TODO: not default to first user to act.
-            self.player_to_action = self._get_user_guid(0)
-            self.betting_status = "N"
-            self.save()
         elif self.stage == GameStages.PocketDone:
             # serve 3 flop cards
             flop_cards = FrenchDeck.next_random_cards(
                 number_of_cards=3, exclude_cards=self._get_served_card_list())
             self.community_cards = "|".join(flop_cards) # 'sA|s7|h5'
             self.stage = GameStages.FLopDone
-            self.player_to_action = self._get_user_guid(0)
-            self.betting_status = "N"
-            self.save()
         elif self.stage == GameStages.FLopDone:
             # serve turn card
             turn_card = FrenchDeck.next_random_cards(
                 number_of_cards=1, exclude_cards=self._get_served_card_list())
             self.community_cards += "|" + turn_card # 'sA|s7|h5|hK'
             self.stage = GameStages.TurnDone
-            self.player_to_action = self._get_user_guid(0)
-            self.betting_status = "N"
-            self.save()
         elif self.stage == GameStages.TurnDone:
             # serve river card
             river_card = FrenchDeck.next_random_cards(
                 number_of_cards=1, exclude_cards=self._get_served_card_list())
             self.community_cards += "|" + river_card # 'sA|s7|h5|hK|dK'
             self.stage = GameStages.RiverDone
-            self.player_to_action = self._get_user_guid(0)
-            self.betting_status = "N"
-            self.save()
-        elif self.stage == GameStages.RiverDone:
-            # River card has been served and the betting round is done.
-            # time for scoring!
-            # TODO:
-            pass
+        # TODO: consider folded users in v2
+        self.player_to_action = self._get_user_guid(0)
+        self.betting_status = "N"
+        self.save() # NOTE: this would trigger updates actively to subscribers through websocket
 
     def number_of_cards_needed(self):
         """number of cards needed for the game to move into NEXT stage."""
