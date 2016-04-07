@@ -80,12 +80,12 @@ def game_status(request):
     # construct game status.
     game_status = {}
     if user_guid:
-        game_status.user_pocket_cards = game.get_user_pocket_cards(user_guid)
-    game_status.community_cards = game.community_cards
-    game_status.stage = game.stage
+        game_status["user_pocket_cards"] = game.get_user_pocket_cards(user_guid)
+    game_status["community_cards"] = game.community_cards
+    game_status["stage"] = game.stage
     # NOTE: front-end would ask user to act with action option list
     #       if user has matching user_guid
-    game_status.player_to_action = game.player_to_action
+    game_status["player_to_action"] = game.player_to_action
     return _json_response(game_status)
 
 @require_POST
