@@ -1,5 +1,6 @@
 import uuid
 import random
+import json
 from django.db import models
 from poker.apis import score_hand
 from django.db.models import signals
@@ -294,7 +295,11 @@ class Game(models.Model):
 
 def send_status(sender, instance, created, **kwargs):
     print "sent to " + "table-{}".format(instance.guid) 
-    Group("table-{}".format(instance.guid)).send({"text": instance.guid})
+    game_status = {}
+    game_status["community_cards"] = instance.community_cards
+    game_status["stage"] = instance.stage
+    game_status["player_to_action"] = instance.player_to_action
+    Group("table-{}".format(instance.guid)).send({"text": json.dumps(game_status)})
 
 
 signals.post_save.connect(send_status, sender=Game)
