@@ -124,7 +124,7 @@ def join_game(request):
     user_name = request.POST.get("name", None)
     if not game_guid:
         return _json_error_response("Add game guid")
-    if not user_guid:
+    if not user_name:
         return _json_error_response("Add name please")
     game, created = Game.objects.get_or_create(guid=game_guid)
     user = User(username=user_name, guid=uuid.uuid4())
