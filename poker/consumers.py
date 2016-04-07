@@ -11,7 +11,7 @@ def ws_connect(message, table_guid, user_guid):
     # check if table exists and you're allowed to be on there
     try:
         game = Game.objects.filter(guid=table_guid)[0]
-        if user_guid in game.players_entered:
+        if user_guid in game.player_guids:
             Group("table-{}".format(table_guid)).add(message.reply_channel)
             print 'ws connect sent to ' + "table-{}".format(table_guid)
     except Exception as e:
