@@ -65,7 +65,7 @@ def game_status(request):
         if games:
             game = games[0]
             game.total_num_of_players += 1
-            game.player_guids += "|" + user_guid
+            game.player_guids += "|" + str(user_guid)
         # if no such game, create new game.
         else:
             game = Game()

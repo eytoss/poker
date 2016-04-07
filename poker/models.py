@@ -48,6 +48,8 @@ class FrenchDeck:
             so next time this method being called, exclude_cards
             would have one more value in it.
         """
+        if not exclude_cards:
+            exclude_cards = []
         return random.choice([x for x in FrenchDeck.DECK_52 if x not in exclude_cards])
 
     @classmethod
@@ -55,6 +57,8 @@ class FrenchDeck:
         """
         responsible for dealing with the next number_of_cards card(s)
         """
+        if not exclude_cards:
+            exclude_cards = []
         next_cards = []
         for x in range(0, number_of_cards):
             next_card = FrenchDeck._next_random_card(exclude_cards)
