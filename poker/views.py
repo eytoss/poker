@@ -9,8 +9,9 @@ WARNING: cheating of the game is currently expected in every possible way
 """
 
 from django.http import HttpResponse
-from poker.models import Game, GameStages
+from poker.models import Game, GameStages, User
 from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.csrf import csrf_exempt
 import json
 import uuid
 
@@ -51,6 +52,11 @@ def game_status(request):
     #       now just return the first non-over game.
     #       if there is no such game, create new one.
     game_guid = request.GET.get("game_guid", None)
+    return game_status_helper(game_guid, user_guid)
+
+    
+
+def game_status_helper(game_guid, user_guid):
     game = None
     if game_guid:
         try:
@@ -112,3 +118,17 @@ def user_action(request):
         return _json_error_response("Not your turn.")
     game.record_action(user_guid, action_type)
     return _json_success_response("Action completed.")
+
+@csrf_exempt
+def join_game(request):
+    game_guid = request.POST.get("game_guid", None)
+    user_name = request.POST.get("name", None)
+    if not game_guid:
+        return _json_error_response("Add game guid")
+    if not user_name:
+        return _json_error_response("Add name please")
+    game, created = Game.objects.get_or_create(guid=game_guid)
+    user = User(username=user_name, guid=uuid.uuid4())
+    user.save()
+    return game_status_helper(game.guid, user.guid)
+
