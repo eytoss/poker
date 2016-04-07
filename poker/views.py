@@ -53,7 +53,7 @@ def game_status(request):
     #       now just return the first non-over game.
     #       if there is no such game, create new one.
     game_guid = request.GET.get("game_guid", None)
-    return game_status_helper(game_guid, user_guid)
+    return _json_response(game_status_helper(game_guid, user_guid))
 
     
 
@@ -94,7 +94,7 @@ def game_status_helper(game_guid, user_guid):
     #       if user has matching user_guid
     game_status["player_to_action"] = game.player_to_action
     game_status["game_guid"] = str(game.guid)
-    return _json_response(game_status)
+    return game_status
 
 @require_POST
 def user_action(request):
@@ -139,8 +139,6 @@ def join_game(request):
     user = User(username=user_name, guid=uuid.uuid4())
     user.save()
     game_status = game_status_helper(game.guid, user.guid)
-    # jl = json.loads(game_status)
-    # print jl
-    # return jl
-    return game_status
+    game_status['player_guid'] = str(user.guid)
+    return _json_response(game_status)
 
