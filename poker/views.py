@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
 import json
 import uuid
+from django.http import HttpResponse
 
 # helper funcs
 def _json_response(response_values):
@@ -121,6 +122,8 @@ def user_action(request):
 
 @csrf_exempt
 def join_game(request):
+    if request.method == "OPTIONS": 
+        return HttpResponse('')
     # game_guid = request.POST.get("game_guid", None)
     # user_name = request.POST.get("name", None)
     print request.body
@@ -135,5 +138,9 @@ def join_game(request):
     game, created = Game.objects.get_or_create(guid=game_guid)
     user = User(username=user_name, guid=uuid.uuid4())
     user.save()
-    return game_status_helper(game.guid, user.guid)
+    game_status = game_status_helper(game.guid, user.guid)
+    # jl = json.loads(game_status)
+    # print jl
+    # return jl
+    return game_status
 
