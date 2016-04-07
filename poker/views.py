@@ -46,7 +46,7 @@ def game_status(request):
     user_guid = request.GET.get("user_guid", None)
     # TODO: in v2, create real User record.
     if not user_guid:
-        user_guid = uuid.uuid4()
+        user_guid = str(uuid.uuid4())
     # TODO: in v2 there should be rooms to choose from
     #       now just return the first non-over game.
     #       if there is no such game, create new one.
