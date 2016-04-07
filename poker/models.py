@@ -250,13 +250,13 @@ class Game(models.Model):
             # serve turn card
             turn_card = FrenchDeck.next_random_cards(
                 number_of_cards=1, exclude_cards=self._get_served_card_list())
-            self.community_cards += "|" + turn_card # 'sA|s7|h5|hK'
+            self.community_cards += "|" + "|".join(turn_card) # 'sA|s7|h5|hK'
             self.stage = GameStages.TurnDone
         elif self.stage == GameStages.TurnDone:
             # serve river card
             river_card = FrenchDeck.next_random_cards(
                 number_of_cards=1, exclude_cards=self._get_served_card_list())
-            self.community_cards += "|" + river_card # 'sA|s7|h5|hK|dK'
+            self.community_cards += "|" + "|".join(river_card) # 'sA|s7|h5|hK|dK'
             self.stage = GameStages.RiverDone
         # TODO: consider folded users in v2
         self.player_to_action = self._get_user_guid(0)
