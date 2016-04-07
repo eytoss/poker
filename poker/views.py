@@ -11,6 +11,7 @@ WARNING: cheating of the game is currently expected in every possible way
 from django.http import HttpResponse
 from poker.models import Game, GameStages
 from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.csrf import csrf_exempt
 import json
 import uuid
 
