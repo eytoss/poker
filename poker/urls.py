@@ -14,8 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url
-from django.contrib import admin
+from poker import views
 
 urlpatterns = [
-    url(r'^game_status/' views.status)
+    url(r'^game/status/', views.game_status, name='game_status'),
+    url(r'^user/action/', views.user_action, name='user_action'),
 ]

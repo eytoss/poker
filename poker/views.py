@@ -9,7 +9,7 @@ WARNING: cheating of the game is currently expected in every possible way
 """
 
 from django.http import HttpResponse, HttpResponseServerError
-from poker.models import Game, User
+from poker.models import Game
 from django.views.decorators.http import require_POST, require_GET
 import json
 
@@ -30,6 +30,7 @@ def _json_success_response(message="Unknown Error"):
 # TODO: still need to implement:
 #    1. game starting: game initialization, user joining etc.
 #    2. game ending: scoring best hands.
+#    3. make checking case INsensitive to avoid potential errors.
 
 @require_GET
 def game_status(request):
@@ -72,8 +73,10 @@ def user_action(request):
     Responsible for react to an action
         performed by a particular user
         from a particular game
-    For example: 1. check. 2. fold. 3. call. 4. re-raise
+    For example: 0. user join! 1. check. 2. fold. 3. call. 4. re-raise
     NOTE: for front-end, game_status is recommended to be called right after
+          also note that scoring is currently being handled entirely in front-end.
+          maybe let front-end tell me what the score is, and I compare them in the backend?
     """
     game_guid = request.POST.get("game_guid", None)
     user_guid = request.POST.get("user_guid", None)
