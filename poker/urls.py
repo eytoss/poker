@@ -18,8 +18,8 @@ from django.contrib import admin
 from poker import views
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^game/status/', views.game_status, name='game_status'),
-    url(r'^user/action/', views.user_action, name='user_action'),
-    url(r'^join/', views.join_game, name='join'),
+    url(r'^admin/?', admin.site.urls),
+    url(r'^game/status/?', views.game_status, name='game_status'),
+    url(r'^user/action/?', views.user_action, name='user_action'),
+    url(r'^join/?', views.join_game, name='join'),
 ]
