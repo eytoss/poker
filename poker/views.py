@@ -120,6 +120,7 @@ def user_action(request):
 
 
 @require_POST
+@csrf_exempt
 def join_game(request):
     game_guid = request.POST.get("game_guid", None)
     user_name = request.POST.get("name", None)
