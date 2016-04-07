@@ -4,14 +4,60 @@
 import requests
 
 hand_score_endpoint = "http://www.pokerbrain.net:88/hand/score"
+player_score_endpoint = "http://www.pokerbrain.net:88/player/score"
 
-def score_hand(hand_str):
+def score_hands(hands_dict):
     """
-    input a hand string which represents 5 ~ 7 cards
+    input a hand dict which represents 5 ~ 7 cards
     return the json obj which
     contains score and related info for it.
+
+    post body looks like this:
+{
+   "players":[
+      {
+         "name":"player 1",
+         "pocket":[
+            {
+               "suit":"h",
+               "name":"a"
+            },
+            {
+               "suit":"c",
+               "name":"a"
+            }
+         ]
+      },
+      {
+         "name":"player 2",
+         "pocket":[
+            {
+               "suit":"c",
+               "name":"7"
+            },
+            {
+               "suit":"d",
+               "name":"2"
+            }
+         ]
+      }
+   ],
+   "community":[
+      {
+         "suit":"s",
+         "name":"a"
+      },
+      {
+         "suit":"s",
+         "name":"k"
+      },
+      {
+         "suit":"s",
+         "name":"8"
+      }
+   ]
+}    
+    
     """
-    # http://www.pokerbrain.net:88/hand/score?h=d7|d13|d12|d10|s8|d2|h14
-    request_url = "{}?{}".format(hand_score_endpoint, hand_str)
-    response = requests.get(request_url)
+    response = requests.post(player_score_endpoint, params=hands_dict)
     return response.json()

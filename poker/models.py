@@ -1,7 +1,7 @@
 import uuid
 import random
 from django.db import models
-from poker.apis import score_hand
+from poker.apis import score_hands
 
 class FrenchDeck:
     """
@@ -227,10 +227,29 @@ class Game(models.Model):
         if self.stage == GameStages.RiverDone:
             # River card has been served and the betting round is done.
             # time for scoring!
-            # TODO: waiting to use advanced api Jon is working one
-            # score each hand and return the winner
-            score_hand("asdfasdf")
-            return
+            hands_info = {}
+            hands_info["players"] = []
+            for x in range(0, self.total_num_of_players):
+                player = {}
+                user_guid = self._get_user_guid(x)
+                player["name"] = user_guid
+                p_str = self.get_user_pocket_cards(user_guid) # h3|h4
+                card_1 = {"suit": p_str[0], "name": p_str[1]}
+                card_2 = {"suit": p_str[3], "name": p_str[4]}
+                pocket = []
+                pocket.append(card_1)
+                pocket.append(card_2)
+                player["pocket"] = pocket
+                hands_info["players"].append(player)
+            hands_info["community"] = []
+            c_cards = self.community_cards.split("|")
+            for x in range(0, 5):
+                card = c_cards[x]
+                c_card = {"suit": card[0], "name": card[1]}
+                hands_info["community"].append(c_card)
+            score_result = score_hands(hands_info)
+            # TODO: update winning info.
+            return self
 
         if self.stage == GameStages.Initial:
             # serve pocket cards

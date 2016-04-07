@@ -54,43 +54,8 @@ def game_status(request):
     #       if there is no such game, create new one.
     game_guid = request.GET.get("game_guid", None)
     hard_code = {
-   "pocket":[
-      "sa",
-      "sk"
-   ],
-   "hand":{
-      "description":"Two Pair",
-      "score":"0001234467",
-      "best5":[
-         "ha",
-         "sa",
-         "d8",
-         "s8",
-         "sk"
-      ]
-   },
-   "status":"preflop",
-   "active_player":"jklm5678",
-   "available_action":[
-      "fold,call"
-   ],
-   "community":[
-      "h3",
-      "c4",
-      "d8",
-      "s8",
-      "ha"
-   ],
-   "players":[
-      "player1",
-      "player2"
-   ],
-   "prev_action":"Player 2 called",
-   "pot_value":0.00,
-   "player_stake":0.00
-}
     return _json_response(hard_code)
-#    return _json_response({"community_cards": "c5|dK|hT|hK", "player_to_action": "27553673-6fd0-482d-b6c0-6b594909da64", "stage": "P", "user_pocket_cards": "cA|hA"})
+#    return _json_response()
  #   return _json_response(game_status_helper(game_guid, user_guid))
 
     
@@ -180,3 +145,43 @@ def join_game(request):
     game_status['player_guid'] = str(user.guid)
     return _json_response(game_status)
 
+"""
+TODO: formalize the format in design doc.
+THis is the format back-end is currently generating.
+This is the format front-end is currently expecting.
+   "pocket":[
+      "sa",
+      "sk"
+   ],
+   "hand":{
+      "description":"Two Pair",
+      "score":"0001234467",
+      "best5":[
+         "ha",
+         "sa",
+         "d8",
+         "s8",
+         "sk"
+      ]
+   },
+   "status":"preflop",
+   "active_player":"jklm5678",
+   "available_action":[
+      "fold,call"
+   ],
+   "community":[
+      "h3",
+      "c4",
+      "d8",
+      "s8",
+      "ha"
+   ],
+   "players":[
+      "player1",
+      "player2"
+   ],
+   "prev_action":"Player 2 called",
+   "pot_value":0.00,
+   "player_stake":0.00
+}
+"""
