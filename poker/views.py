@@ -53,7 +53,44 @@ def game_status(request):
     #       now just return the first non-over game.
     #       if there is no such game, create new one.
     game_guid = request.GET.get("game_guid", None)
-    return _json_response({"community_cards": "c5|dK|hT|hK", "player_to_action": "27553673-6fd0-482d-b6c0-6b594909da64", "stage": "P", "user_pocket_cards": "cA|hA"})
+    hard_code = {
+   "pocket":[
+      "sa",
+      "sk"
+   ],
+   "hand":{
+      "description":"Two Pair",
+      "score":"0001234467",
+      "best5":[
+         "ha",
+         "sa",
+         "d8",
+         "s8",
+         "sk"
+      ]
+   },
+   "status":"preflop",
+   "active_player":"jklm5678",
+   "available_action":[
+      "fold,call"
+   ],
+   "community":[
+      "h3",
+      "c4",
+      "d8",
+      "s8",
+      "ha"
+   ],
+   "players":[
+      "player1",
+      "player2"
+   ],
+   "prev_action":"Player 2 called",
+   "pot_value":0.00,
+   "player_stake":0.00
+}
+    return _json_response(hard_code)
+#    return _json_response({"community_cards": "c5|dK|hT|hK", "player_to_action": "27553673-6fd0-482d-b6c0-6b594909da64", "stage": "P", "user_pocket_cards": "cA|hA"})
  #   return _json_response(game_status_helper(game_guid, user_guid))
 
     
