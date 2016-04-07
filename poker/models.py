@@ -149,14 +149,14 @@ class Game(models.Model):
 
     STAGE_CHOICES = [(getattr(GameStages, key), key) for key in GameStages.__dict__.keys() if not key.startswith("__")]
     stage = models.CharField(
-        max_lengh=1,
+        max_length=1,
         default=GameStages.Initial,
         choices=STAGE_CHOICES,
         help_text="the current stage of the game."
     )
 
     bets = models.CharField(
-        max_lengh=1000, default="",
+        max_length=1000, default="",
         help_text=("place holder once we feel comfortable with introducing bets and betting history.")
     )
 
