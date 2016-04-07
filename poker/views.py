@@ -119,8 +119,6 @@ def user_action(request):
     game.record_action(user_guid, action_type)
     return _json_success_response("Action completed.")
 
-
-@require_POST
 @csrf_exempt
 def join_game(request):
     game_guid = request.POST.get("game_guid", None)
