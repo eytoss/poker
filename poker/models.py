@@ -21,12 +21,15 @@ class FrenchDeck:
     # Q - Queen
     # K - King
     # A - Ace
-    DECK_52 = [
-        "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "dT", "dJ", "dQ", "dK", "dA",
-        "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "cT", "cJ", "cQ", "cK", "cA",
-        "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "hT", "hJ", "hQ", "hK", "hA",
-        "s2", "s3", "d4", "s5", "s6", "s7", "s8", "s9", "sT", "sJ", "sQ", "sK", "sA",
-    ]
+    suits = ['d', 'c', 'h', 's']
+    ranks = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+    DECK_52 = [x+y for x in suits for y in ranks]
+#     DECK_52 = [
+#         "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9", "dT", "dJ", "dQ", "dK", "dA",
+#         "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "cT", "cJ", "cQ", "cK", "cA",
+#         "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "hT", "hJ", "hQ", "hK", "hA",
+#         "s2", "s3", "d4", "s5", "s6", "s7", "s8", "s9", "sT", "sJ", "sQ", "sK", "sA",
+#     ]
 
     def _next_random_card(self, exclude_cards=None):
         """
@@ -88,18 +91,15 @@ class Game(models.Model):
     )
     pocket_cards = models.CharField(
         max_length=125, blank=True,
-        #TODO: better to introduce one more delimiter between two cards,
-        #      to facilitate front-end.
-        #      note to avoid using `-` cause that's valid character in guid.
         help_text=(
             "Keeping records of the pocket cards the game have dealt with, "
             "so the next card generated from the game should never be one of them:) "
             "we will limit X=3 players at most in a game for now, "
-            "so the maximum of cards will be (36+1+2*2+1)*X-1 = 125. "
-            "'|' will be used as delimiter between players and "
-            "'$' will be used as delimiter between player guid and his/her pocket cards."
-            "for example: <guid_1>$h3h4|<guid_2>$d3d4|<guid_3>$c3c4 "
-            "represents a game of 3 players each having 2 pocket cards(of course!)."
+            "so the maximum of cards will be (2+1+2+1)*X-1 = 17. "
+            "'|' will be used as delimiter between two pocket cards and "
+            "'$' will be used as delimiter between players. "
+            "for example: h3|h4$d3|d4$c3|c4 "
+            "represents 3 sets of pocket cards"
         ),
     )
     community_cards = models.CharField(
@@ -113,22 +113,19 @@ class Game(models.Model):
             "the current status of a game is in stage of `turn` "
         ),
     )
-    # TODO: record user's entered with guid. so no need to record in pocket_cards?
-    #       also auto serve the initial card.
-    players_entered = models.CharField(
-        max_length=125, blank=True,
+    total_num_of_players = models.IntegerField(help_text="the total number of players who entered this game Initially.")
+    player_guids = models.CharField(
+        max_length=110, blank=True,
         help_text=(
             "Keeping records of the pocket cards the game have dealt with, "
             "so the next card generated from the game should never be one of them:) "
             "we will limit X=3 players at most in a game for now, "
-            "so the maximum of characters will be (36+1+1+1)*X-1 = 125. "
-            "'|' will be used as delimiter between players and "
-            "'$' will be used as delimiter between player guid and his/her status."
-            "for example: <guid_1>$h3h4|<guid_2>$d3d4|<guid_3>$c3c4 "
-            "represents a game of 3 players each having 2 pocket cards(of course!)."
+            "so the maximum of characters will be (36+1)*X-1 = 110. "
+            "'|' will be used as delimiter between players "
+            "for example: <guid_1>|<guid_2>|<guid_3> "
+            "represents a game of 3 players"
         ),
     )
-    total_num_of_players = models.IntegerField(help_text="the total number of players who entered this game Initially.")
     # TODO: foreign key relationship to Player model in v2.
     player_to_action = models.CharField(
         max_length=36, blank=True,
@@ -148,6 +145,7 @@ class Game(models.Model):
             "betting round is NOT over."
         ),
     )
+
     STAGE_CHOICES = [(getattr(GameStages, key), key) for key in GameStages.__dict__.keys() if not key.startswith("__")]
     stage = models.CharField(
         max_lengh=1,
@@ -177,6 +175,16 @@ class Game(models.Model):
         """
         return "N" not in self.betting_status
 
+    def _get_served_card_list(self):
+        # TODO: test this.
+        pocket_card_list = self.pocket_cards.replace("$", "|").split("|")
+        community_card_list = self.community_cards.split("|")
+        return pocket_card_list.extend(community_card_list)
+
+    def _get_user_guid(self, index):
+        player_guid_list = self.player_guids.split("|")
+        return player_guid_list[index % len(player_guid_list)]
+
     def move_to_next_stage_if_ready(self):
         """
         game engine would push the game into next stage
@@ -184,27 +192,47 @@ class Game(models.Model):
             or showdown, or whatever # TODO: supported in v2.
         returns the updated game.
         """
-        # TODO: implement this bulk stuff~
         if not self._is_next_stage_ready():
             return self
+
         # corresponding action would be taken and
         # game would be updated
+        if self.stage == GameStages.RiverDone:
+            # River card has been served and the betting round is done.
+            # time for scoring!
+            # TODO: need behavior design
+            return
+
         if self.stage == GameStages.Initial:
             # serve pocket cards
-            pass
+            num_of_cards = self.total_num_of_players * 2
+            pocket_cards = FrenchDeck.next_random_cards(
+                number_of_cards=num_of_cards, exclude_cards=None)
+            p_cards = "|".join(pocket_cards) # 'sA|s7|dK|a7|h3|h5' for 3 players
+            self.pocket_cards = "$".join(p_cards[i:i+5] for i in range(0, len(p_cards), 6)) # 'sA|s7$dK|a7$h3|h5'
+            self.stage = GameStages.PocketDone
         elif self.stage == GameStages.PocketDone:
-            # serve flop cards
-            pass
+            # serve 3 flop cards
+            flop_cards = FrenchDeck.next_random_cards(
+                number_of_cards=3, exclude_cards=self._get_served_card_list())
+            self.community_cards = "|".join(flop_cards) # 'sA|s7|h5'
+            self.stage = GameStages.FLopDone
         elif self.stage == GameStages.FLopDone:
             # serve turn card
-            # FrenchDeck.next_random_cards(2, exclude_cards=self.community_cards.append(self.pocket_cards))
-            pass
+            turn_card = FrenchDeck.next_random_cards(
+                number_of_cards=1, exclude_cards=self._get_served_card_list())
+            self.community_cards += "|" + turn_card # 'sA|s7|h5|hK'
+            self.stage = GameStages.TurnDone
         elif self.stage == GameStages.TurnDone:
             # serve river card
-            pass
-        elif self.stage == GameStages.RiverDone:
-            # compare!
-            return self
+            river_card = FrenchDeck.next_random_cards(
+                number_of_cards=1, exclude_cards=self._get_served_card_list())
+            self.community_cards += "|" + river_card # 'sA|s7|h5|hK|dK'
+            self.stage = GameStages.RiverDone
+        # TODO: consider folded users in v2
+        self.player_to_action = self._get_user_guid(0)
+        self.betting_status = "N"
+        self.save() # NOTE: this would trigger updates actively to subscribers through websocket
 
     def number_of_cards_needed(self):
         """number of cards needed for the game to move into NEXT stage."""
@@ -230,14 +258,14 @@ class Game(models.Model):
         """get the pocket cards for given user"""
         if self.stage == GameStages.Initial:
             return None
-        # self.pocket_cards example: <guid_1>$h3h4|<guid_2>$d3d4|<guid_3>$c3c4
-        pocket_cards_list = self.pocket_cards.split("|")
-        for pocket_cards in pocket_cards_list:
-            if pocket_cards.split("$")[0] == user_guid:
-                return pocket_cards.split("$")[1]
-        # should never reach here, this indicates an issue of the game.
-        # TODO: raise error and/or log this in v2.
-        return None
+
+        player_guid_list = self.player_guids.split("|")
+        if user_guid not in player_guid_list:
+            return None
+
+        index = player_guid_list.index(user_guid)
+        pocket_cards_list = self.pocket_cards.split("$")
+        return pocket_cards_list[index]
 
 class User(models.Model):
     """
