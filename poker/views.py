@@ -121,8 +121,13 @@ def user_action(request):
 
 @csrf_exempt
 def join_game(request):
-    game_guid = request.POST.get("game_guid", None)
-    user_name = request.POST.get("name", None)
+    # game_guid = request.POST.get("game_guid", None)
+    # user_name = request.POST.get("name", None)
+    print request.body
+    post_json = json.loads(request.body)
+    print post_json
+    game_guid = post_json['game_guid']
+    user_name = post_json['name']
     if not game_guid:
         return _json_error_response("Add game guid")
     if not user_name:
