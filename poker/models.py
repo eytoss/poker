@@ -2,6 +2,8 @@ import uuid
 import random
 from django.db import models
 from poker.apis import score_hand
+from django.db.models import signals
+from channels import Group
 
 class FrenchDeck:
     """
@@ -289,6 +291,13 @@ class Game(models.Model):
         index = player_guid_list.index(user_guid)
         pocket_cards_list = self.pocket_cards.split("$")
         return pocket_cards_list[index]
+
+def send_status(sender, instance, created, **kwargs):
+    print "sent to " + "table-{}".format(instance.guid) 
+    Group("table-{}".format(instance.guid)).send({"text": instance.guid})
+
+
+signals.post_save.connect(send_status, sender=Game)
 
 class User(models.Model):
     """
