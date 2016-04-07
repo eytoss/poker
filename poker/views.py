@@ -127,7 +127,7 @@ def join_game(request):
     if not user_guid:
         return _json_error_response("Add name please")
     game, created = Game.objects.get_or_create(guid=game_guid)
-    user = User(username=name, guid=uuid.uuid4())
+    user = User(username=user_name, guid=uuid.uuid4())
     user.save()
     return game_status_helper(game.guid, user.guid)
 
