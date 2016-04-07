@@ -61,6 +61,7 @@ class FrenchDeck:
 
 class BettingStatus:
     """user's current betting status in a game"""
+    # TODO: introduce Wait_For_Start status in v2, probably change BettingStatus to UserStatus
     Fold = "F" # fold. quit the game.
     Bet = "B" # bet
     Call_Or_Check = "C" # matches the current bet
@@ -90,7 +91,7 @@ class Game(models.Model):
         ),
     )
     pocket_cards = models.CharField(
-        max_length=125, blank=True,
+        max_length=125, default="",
         help_text=(
             "Keeping records of the pocket cards the game have dealt with, "
             "so the next card generated from the game should never be one of them:) "
@@ -103,7 +104,7 @@ class Game(models.Model):
         ),
     )
     community_cards = models.CharField(
-        max_length=14, blank=True,
+        max_length=14, default="",
         help_text=(
             "Keeping records of the community cards(0 ~ 5 cards) the game have dealt with "
             "using | as the delimiter. "
@@ -113,9 +114,9 @@ class Game(models.Model):
             "the current status of a game is in stage of `turn` "
         ),
     )
-    total_num_of_players = models.IntegerField(help_text="the total number of players who entered this game Initially.")
+    total_num_of_players = models.IntegerField(default=0, help_text="the total number of players who entered this game Initially.")
     player_guids = models.CharField(
-        max_length=110, blank=True,
+        max_length=110, default="",
         help_text=(
             "Keeping records of the pocket cards the game have dealt with, "
             "so the next card generated from the game should never be one of them:) "
@@ -128,14 +129,14 @@ class Game(models.Model):
     )
     # TODO: foreign key relationship to Player model in v2.
     player_to_action = models.CharField(
-        max_length=36, blank=True,
+        max_length=36, default="",
         help_text=(
             "It's this player's turn to act. "
             "The game would pause it's status until this player took action."
         ),
     )
     betting_status = models.CharField(
-        max_length=125, blank=True,
+        max_length=125, default="",
         help_text=(
             "It's the current round betting status for all the active users "
             "The game engine would use this info to determine if next stage "
@@ -149,22 +150,35 @@ class Game(models.Model):
     STAGE_CHOICES = [(getattr(GameStages, key), key) for key in GameStages.__dict__.keys() if not key.startswith("__")]
     stage = models.CharField(
         max_length=1,
+        default=GameStages.Initial,
         choices=STAGE_CHOICES,
         help_text="the current stage of the game."
     )
 
     bets = models.CharField(
-        max_length=1000, blank=True,
+        max_length=1000, default="",
         help_text=("place holder once we feel comfortable with introducing bets and betting history.")
     )
 
-    def record_action(self):
+    def _get_next_user_guid(self, current_user_guid):
+        """get the user guid to the right of current player"""
+        index = self._get_player_index(current_user_guid)
+        user_guid_list = self.player_guids.split("|")
+        return user_guid_list[(index+1)%len(user_guid_list)]
+
+    def record_action(self, user_guid, action_type):
         """
         record the user action, and update the status of the game
         if applicable, push the game into next stage.
         """
-        # TODO: need to update the game: cards, betting status etc.
-        raise NotImplementedError
+        # update betting status
+        user_index = self._get_player_index(user_guid)
+        user_action_list = list(self.betting_status)
+        user_action_list[user_index] = action_type
+        self.betting_status = "".join(user_action_list)
+
+        self.player_to_action = self._get_next_user_guid(user_guid)
+        self.save()
 
     def _is_next_stage_ready(self):
         """
@@ -173,7 +187,23 @@ class Game(models.Model):
         NOTE: this method need to remain very efficient
             as it is supposed to be called very frequently.
         """
-        return "N" not in self.betting_status
+        return "N" not in self.betting_status and
+                self.total_num_of_players > 1
+
+    def _get_served_card_list(self):
+        # TODO: test this.
+        pocket_card_list = self.pocket_cards.replace("$", "|").split("|")
+        community_card_list = self.community_cards.split("|")
+        return pocket_card_list.extend(community_card_list)
+
+    def _get_user_guid(self, index):
+        player_guid_list = self.player_guids.split("|")
+        return player_guid_list[index % len(player_guid_list)]
+
+    def _get_player_index(self, user_guid):
+        if user_guid not in self.player_guids:
+            raise Exception
+        return self.player_guids.split("|").index(user_guid)
 
     def _get_served_card_list(self):
         # TODO: test this.
@@ -231,7 +261,7 @@ class Game(models.Model):
             self.stage = GameStages.RiverDone
         # TODO: consider folded users in v2
         self.player_to_action = self._get_user_guid(0)
-        self.betting_status = "N"
+        self.betting_status = "N" * self.total_num_of_players
         self.save() # NOTE: this would trigger updates actively to subscribers through websocket
 
     def number_of_cards_needed(self):

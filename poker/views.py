@@ -8,10 +8,11 @@ if needed.
 WARNING: cheating of the game is currently expected in every possible way
 """
 
-from django.http import HttpResponse, HttpResponseServerError
-from poker.models import Game
+from django.http import HttpResponse
+from poker.models import Game, GameStages
 from django.views.decorators.http import require_POST, require_GET
 import json
+import uuid
 
 # helper funcs
 def _json_response(response_values):
@@ -27,10 +28,8 @@ def _json_error_response(message="Unknown Error"):
 def _json_success_response(message="Unknown Error"):
     return _json_response({'type': 'Success', 'message': message})
 
-# TODO: still need to implement:
-#    1. game starting: game initialization, user joining etc.
-#    2. game ending: scoring best hands.
-#    3. make checking case INsensitive to avoid potential errors.
+# TODO: still need to implement key function list:
+#    1. game ending: scoring best hands.
 
 @require_GET
 def game_status(request):
@@ -38,22 +37,44 @@ def game_status(request):
     returns the current status. of a specific game,
         from the perspective of the given user if user_guid provided.
         so he can't see the pocket cards of others, of course :)
-    pushed the game into the next stage if ready
-    # TODO: triggering possible game update in GET is not intuitive.
-    #        find a better way to do this in v2.
+    Side Effects(updates) for this GET method:
+        1. if no user specified, create user
+        2. if no game specified, join or create game.
+        3. pushes the game into the next stage if ready
+    # TODO: remove side effects in v2.
     """
-    # sanity checks
-    game_guid = request.GET.get("game_guid", None)
     user_guid = request.GET.get("user_guid", None)
-    if not game_guid:
-        return HttpResponseServerError()
+    # TODO: in v2, create real User record.
+    if not user_guid:
+        user_guid = uuid.uuid4()
+    # TODO: in v2 there should be rooms to choose from
+    #       now just return the first non-over game.
+    #       if there is no such game, create new one.
+    game_guid = request.GET.get("game_guid", None)
     game = None
-    try:
-        game = Game.objects.get(guid=game_guid)
-    except:
-        return HttpResponseServerError()
+    if game_guid:
+        try:
+            # assume user is already in the game.
+            # TODO: defensive coding in v2 to double check
+            game = Game.objects.get(guid=game_guid)
+        except:
+            return _json_error_response("Invalid game guid.")
+    else:
+        # join the top game which has not started yet.
+        games = Game.objects.filter(stage=GameStages.Initial)
+        if games:
+            game = games[0]
+            game.total_num_of_players += 1
+            game.player_guids += "|" + user_guid
+        # if no such game, create new game.
+        else:
+            game = Game()
+            game.total_num_of_players = 1
+            game.player_guids = user_guid
+            game.player_to_action = user_guid
+        game.save()
 
-    # here is where the game serving cards
+    # here is where the game serving cards and compare hands.
     game = game.move_to_next_stage_if_ready()
 
     # construct game status.
