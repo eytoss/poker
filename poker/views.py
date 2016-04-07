@@ -53,7 +53,8 @@ def game_status(request):
     #       now just return the first non-over game.
     #       if there is no such game, create new one.
     game_guid = request.GET.get("game_guid", None)
-    return _json_response(game_status_helper(game_guid, user_guid))
+    return _json_response({"community_cards": "c5|dK|hT|hK", "player_to_action": "27553673-6fd0-482d-b6c0-6b594909da64", "stage": "P", "user_pocket_cards": "cA|hA"})
+ #   return _json_response(game_status_helper(game_guid, user_guid))
 
     
 
