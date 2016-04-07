@@ -205,6 +205,16 @@ class Game(models.Model):
             raise Exception
         return self.player_guids.split("|").index(user_guid)
 
+    def _get_served_card_list(self):
+        # TODO: test this.
+        pocket_card_list = self.pocket_cards.replace("$", "|").split("|")
+        community_card_list = self.community_cards.split("|")
+        return pocket_card_list.extend(community_card_list)
+
+    def _get_user_guid(self, index):
+        player_guid_list = self.player_guids.split("|")
+        return player_guid_list[index % len(player_guid_list)]
+
     def move_to_next_stage_if_ready(self):
         """
         game engine would push the game into next stage
