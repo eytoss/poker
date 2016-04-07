@@ -195,7 +195,7 @@ class Game(models.Model):
             as it is supposed to be called very frequently.
         """
         return "N" not in self.betting_status and \
-                self.total_num_of_players > 1
+                self.total_num_of_players > 0
 
     def _get_served_card_list(self):
         # TODO: test this.
