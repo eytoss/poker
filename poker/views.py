@@ -86,6 +86,7 @@ def game_status(request):
     # NOTE: front-end would ask user to act with action option list
     #       if user has matching user_guid
     game_status["player_to_action"] = game.player_to_action
+    game_status["game_guid"] = str(game.guid)
     return _json_response(game_status)
 
 @require_POST
