@@ -32,7 +32,8 @@ class FrenchDeck:
 #         "s2", "s3", "d4", "s5", "s6", "s7", "s8", "s9", "sT", "sJ", "sQ", "sK", "sA",
 #     ]
 
-    def _next_random_card(self, exclude_cards=None):
+    @classmethod
+    def _next_random_card(cls, exclude_cards=[]):
         """
         Returns a random card from a FULL or Partial DECK_52.
         NOTE: it's the caller's responsibility to:
@@ -47,15 +48,16 @@ class FrenchDeck:
             so next time this method being called, exclude_cards
             would have one more value in it.
         """
-        return random.choice([x for x in self.DECK_52 if x not in exclude_cards])
+        return random.choice([x for x in FrenchDeck.DECK_52 if x not in exclude_cards])
 
-    def next_random_cards(self, number_of_cards=1, exclude_cards=None):
+    @classmethod
+    def next_random_cards(cls, number_of_cards=1, exclude_cards=[]):
         """
         responsible for dealing with the next number_of_cards card(s)
         """
         next_cards = []
         for x in range(0, number_of_cards):
-            next_card = self._random_card(exclude_cards)
+            next_card = FrenchDeck._next_random_card(exclude_cards)
             next_cards.append(next_card)
             exclude_cards.append(next_card)
         return next_cards
@@ -230,7 +232,7 @@ class Game(models.Model):
             # serve pocket cards
             num_of_cards = self.total_num_of_players * 2
             pocket_cards = FrenchDeck.next_random_cards(
-                number_of_cards=num_of_cards, exclude_cards=None)
+                number_of_cards=num_of_cards, exclude_cards=[])
             p_cards = "|".join(pocket_cards) # 'sA|s7|dK|a7|h3|h5' for 3 players
             self.pocket_cards = "$".join(p_cards[i:i+5] for i in range(0, len(p_cards), 6)) # 'sA|s7$dK|a7$h3|h5'
             self.stage = GameStages.PocketDone
@@ -256,6 +258,7 @@ class Game(models.Model):
         self.player_to_action = self._get_user_guid(0)
         self.betting_status = "N" * self.total_num_of_players
         self.save() # NOTE: this would trigger updates actively to subscribers through websocket
+        return self
 
     def number_of_cards_needed(self):
         """number of cards needed for the game to move into NEXT stage."""
